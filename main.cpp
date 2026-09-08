@@ -61,12 +61,15 @@ int main() {
 
 
 
-        array<int64_t, 4> input_shape{1, 3, 640, 640};  //NCHW 格式:N(batch)、C(channel)、H(height)、W(width)1 → Batch(批次数),表示一次只送 1 张图进去推理，3 → Channel(通道数),对应 R、G、B 三个通道，640 → Height(高度)，640 → Width(宽度)
-        Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(
-            OrtArenaAllocator, OrtMemTypeDefault);
-        Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
-            memory_info, input_data.data(), input_data.size(),
-            input_shape.data(), input_shape.size());
+        array<int64_t, 4> input_shape{1, 3, 640, 640};  //定义4维张量的形状，NCHW格式，类型必须是int64_t，ONNX Runtime要求NCHW （yolo默认格式）
+                                                        //格式:N( Number of samples：样本数量，翻译为批次batch、C(channel)、H(height)、W(width)
+                                                        //1 → Batch(批次数)，3 → Channel(通道数),对应 R、G、B 三个通道，640 → Height(高度)，640 → Width(宽度)
+        Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(            //创建CPU内存信息对象，描述张量数据存放在CPU内存
+            OrtArenaAllocator, OrtMemTypeDefault);              // 使用ORT自带的Arena内存分配器，内存池提升分配释放效率；     // 默认CPU内存类型，普通主机内存；
+        Ort::Value input_tensor = Ort::Value::CreateTensor<float>(        //创建ORT的输入张量对象input_tensor，把C++内存包装成ONNX认识的Tensor
+            memory_info, input_data.data(), input_data.size(),     //分别是， 内存描述：告知ORT数据在CPU里；    源数据指针：vector<float> input_data底层连续内存首地址，CHW一维数组；  张量总元素数量：1*3*640*640 = 1228800；
+        
+            input_shape.data(), input_shape.size());               //维度数组首地址，传入{1,3,640,640}的数组指针；   维度的个数，这里是4维(NCHW)
 
         // 推理计时
         auto start = chrono::high_resolution_clock::now();
