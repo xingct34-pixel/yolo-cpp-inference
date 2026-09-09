@@ -86,32 +86,32 @@ int main() {
         float fps = 1000.0 / inference_time;              //计算fps（Frames Per Second），也就是一秒能处理多少帧
 
         // 解析结果
-        float* data = outputs[0].GetTensorMutableData<float>();
-        float conf_threshold = 0.5;
+        float* data = outputs[0].GetTensorMutableData<float>();     // 获取模型输出张量output0的数据指针，指向float类型数组，mutable是可变的，意思可以读写，如果是删去只能读不能写
+        float conf_threshold = 0.5;                               // 设置置信度阈值，大于0.5的检测框才保留
         vector<Rect> boxes;
         vector<float> scores;
         vector<int> class_ids;
 
-        for (int i = 0; i < 8400; i++) {
-            float max_score = 0;
-            int class_id = 0;
-            for (int c = 0; c < 80; c++) {
-                float score = data[c * 8400 + 4 * 8400 + i];
+        for (int i = 0; i < 8400; i++) {             //遍历YOLO输出的8400个候选检测框     8400=80*80+40*40+20*20   这是yolov8里面三个不同尺度的检测头
+            float max_score = 0;                      //记录置信度最高得分数
+            int class_id = 0;                           //最大置信度对应的类别
+            for (int c = 0; c < 80; c++) {            //80个类别    coco数据集类别
+                float score = data[c * 8400 + 4 * 8400 + i];    //内存排布：通道优先，(4+c)*8400+i
                 if (score > max_score) {
-                    max_score = score;
-                    class_id = c;
+                    max_score = score;              //更新最大置信度
+                    class_id = c;                  //更新类别
                 }
             }
-            if (max_score > conf_threshold) {
-                float cx = data[0 * 8400 + i] * img_w / 640;
-                float cy = data[1 * 8400 + i] * img_h / 640;
-                float w  = data[2 * 8400 + i] * img_w / 640;
-                float h  = data[3 * 8400 + i] * img_h / 640;
-                int x = (int)(cx - w / 2);
+            if (max_score > conf_threshold) {           //  判断是否大于之前设定的阈值，低于舍弃
+                float cx = data[0 * 8400 + i] * img_w / 640;     // cx：模型输出的中心点x坐标（基于640×640输入图）
+                float cy = data[1 * 8400 + i] * img_h / 640;     // cy：模型输出的中心点y坐标（基于640×640输入图）
+                float w  = data[2 * 8400 + i] * img_w / 640;     // w：模型输出目标框宽度
+                float h  = data[3 * 8400 + i] * img_h / 640;     // h：模型输出目标框高度
+                int x = (int)(cx - w / 2);                //换算成OpenCV Rect需要的xy坐标
                 int y = (int)(cy - h / 2);
-                boxes.push_back(Rect(x, y, (int)w, (int)h));
-                scores.push_back(max_score);
-                class_ids.push_back(class_id);
+                boxes.push_back(Rect(x, y, (int)w, (int)h));   // 将当前有效框存入boxes容器，Rect参数：左上角x,y，框宽w，框高h       Rect是OpenCV 里专门用来表示矩形框的结构体。
+                scores.push_back(max_score);                   // 将当前框的最大置信度存入scores容器，用于后续NMS。NMS是Non-Maximum Suppression，非极大值抑制，同一个物体，模型会预测出来好几个重叠的检测框，NMS作用是：删掉重复重叠的框，只保留置信度最高的那一个
+                class_ids.push_back(class_id);                // 将当前框对应的类别ID存入class_ids容器
             }
         }
 
