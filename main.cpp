@@ -116,38 +116,37 @@ int main() {
         }
 
         // NMS
-        vector<int> indices;
-        dnn::NMSBoxes(boxes, scores, conf_threshold, 0.45, indices);
+        vector<int> indices;     //保存NMS筛选完成后，保留下来的框在boxes数组里的下标索引
+        dnn::NMSBoxes(boxes, scores, conf_threshold, 0.45, indices);      //OpenCV dnn模块的非极大值抑制函数     Deep Neural Networks，深度神经网络模块，OpenCV 用它来做深度学习相关功能：加载 ONNX、推理、NMS 检测框后处理。
 
         // 画框
         for (int idx : indices) {
-            rectangle(img, boxes[idx], Scalar(0, 255, 0), 2);
+            rectangle(img, boxes[idx], Scalar(0, 255, 0), 2); // 在图片img上绘制检测框；boxes[idx]取出当前框，Scalar(0,255,0)=绿色，线条粗细2
             string label;
-            if (class_ids[idx] < (int)class_names.size()) {
-                label = class_names[class_ids[idx]];
+            if (class_ids[idx] < (int)class_names.size()) {     // 判断类别ID是否在类别名字数组范围内
+                label = class_names[class_ids[idx]];             //在范围内，直接取对应的类别名称
             } else {
-                label = "class" + to_string(class_ids[idx]);
+                label = "class" + to_string(class_ids[idx]);     // 超出类别名数组范围，就用class+编号作为标签
             }
-            label += " " + to_string((int)(scores[idx] * 100)) + "%";
-            putText(img, label, Point(boxes[idx].x, boxes[idx].y - 5),
-                    FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 1);
+            label += " " + to_string((int)(scores[idx] * 100)) + "%";   // 拼接置信度，乘以100转为百分比
+            putText(img, label, Point(boxes[idx].x, boxes[idx].y - 5),   // 在图片上写标签文字；文字位置放在框左上角往上偏移5像素
+                    FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 1);    // 字体、字体缩放0.5，绿色文字，线条粗细1   
         }
 
-        // 显示fps
-        putText(img, "FPS: " + to_string((int)fps),
-                Point(10, 30), FONT_HERSHEY_SIMPLEX, 1,
+        putText(img, "FPS: " + to_string((int)fps),    // 在图片左上角绘制FPS文字
+                Point(10, 30), FONT_HERSHEY_SIMPLEX, 1,    //字体位置（10,30）   字体缩放1    红色   粗细2
                 Scalar(0, 0, 255), 2);
 
-        // 每10帧保存一次结果图片
+
         frame_count++;
-        if (frame_count % 10 == 0) {
+        if (frame_count % 10 == 0) {               // 每10帧保存一次结果图片
             imwrite("/home/xct/cpp_projects/yolo_inference/build/frame_" + 
-                    to_string(frame_count) + ".jpg", img);
-            cout << "第" << frame_count << "帧，FPS：" << (int)fps 
-                 << "，检测到：" << indices.size() << "个目标" << endl;
+                    to_string(frame_count) + ".jpg", img);                   // 将当前画好框的图像保存为jpg文件
+            cout << "第" << frame_count << "帧，FPS：" << (int)fps   
+                 << "，检测到：" << indices.size() << "个目标" << endl;              // 控制台打印信息：当前帧号、FPS、本次检测目标数量
         }
 
-        if (frame_count >= 50) break;
+        if (frame_count >= 50) break;     // 总共处理满50帧就跳出视频循环，停止读取视频
     }
 
     cap.release();
