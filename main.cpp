@@ -72,18 +72,18 @@ int main() {
             input_shape.data(), input_shape.size());               //维度数组首地址，传入{1,3,640,640}的数组指针；   维度的个数，这里是4维(NCHW)
 
         // 推理计时
-        auto start = chrono::high_resolution_clock::now();
+        auto start = chrono::high_resolution_clock::now(); //使用高精度时钟，记录开始时间
 
-        const char* input_names[] = {"images"};
-        const char* output_names[] = {"output0"};
-        auto outputs = session.Run(
-            Ort::RunOptions{nullptr},
-            input_names, &input_tensor, 1,
-            output_names, 1);
+        const char* input_names[] = {"images"};           //定义输入名
+        const char* output_names[] = {"output0"};           //定义输出名
+        auto outputs = session.Run(                        //运行模型推理
+            Ort::RunOptions{nullptr},                    //推理运行配置，参数默认
+            input_names, &input_tensor, 1,              //输入节点名称，输入张量数量
+            output_names, 1);                          //输出节点名称
 
-        auto end = chrono::high_resolution_clock::now();
-        float inference_time = chrono::duration<float, milli>(end - start).count();
-        float fps = 1000.0 / inference_time;
+        auto end = chrono::high_resolution_clock::now();      //使用高精度时钟记录结束时间
+        float inference_time = chrono::duration<float, milli>(end - start).count();     //计算推理耗时，end-start，然后转化为毫秒的浮点数
+        float fps = 1000.0 / inference_time;              //计算fps（Frames Per Second），也就是一秒能处理多少帧
 
         // 解析结果
         float* data = outputs[0].GetTensorMutableData<float>();
