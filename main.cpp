@@ -118,7 +118,7 @@ int main() {
         // NMS
         vector<int> indices;     //保存NMS筛选完成后，保留下来的框在boxes数组里的下标索引
         dnn::NMSBoxes(boxes, scores, conf_threshold, 0.45, indices);      //OpenCV dnn模块的非极大值抑制函数     Deep Neural Networks，深度神经网络模块，OpenCV 用它来做深度学习相关功能：加载 ONNX、推理、NMS 检测框后处理。
-
+                                                                     //0.45是IOU阈值：意思是两个框重叠超过45%认为是同一个目标，删除其中一个，保留置信度高的
         // 画框
         for (int idx : indices) {
             rectangle(img, boxes[idx], Scalar(0, 255, 0), 2); // 在图片img上绘制检测框；boxes[idx]取出当前框，Scalar(0,255,0)=绿色，线条粗细2
